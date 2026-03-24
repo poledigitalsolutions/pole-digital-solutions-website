@@ -166,7 +166,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
 
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Pole Digital Solutions" className="h-10" />
+            <img src="/Images/services/logo.png" alt="Pole Digital Solutions" className="h-10" />
             <span className="font-bold text-blue-900">Pole Digital Solutions</span>
           </div>
 
