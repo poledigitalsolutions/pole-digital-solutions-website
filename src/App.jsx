@@ -39,7 +39,7 @@ const services=[
  {title:"Business Website",img:"/Images/services/business.jpg"},
  {title:"Company Website",img:"/Images/services/company.jpg"},
  {title:"Education Website",img:"/Images/services/education.jpg"},
- {title:"Import Export Website",img:"/Images/services/import-export.jpg"},
+ {title:"Import Export Website",img:"/Images/services/importexport.jpg"},
  {title:"Restaurant Website",img:"/Images/services/restaurant.jpg"},
  {title:"Portfolio Website",img:"/Images/services/portfolio.jpg"},
  {title:"Startup Landing Page",img:"/Images/services/startup.jpg"}
@@ -143,61 +143,144 @@ const resetMagnetic=e=>{
  e.currentTarget.style.transform="translate(0,0)";
 };
 
-/* ---------------- PARTICLE BACKGROUND ---------------- */
+/* ---------------- COSMIC GALAXY BACKGROUND ---------------- */
 useEffect(()=>{
  const canvas=canvasRef.current;
  if(!canvas) return;
-
  const ctx=canvas.getContext("2d");
+
+ let animationId;
 
  const resize=()=>{
   canvas.width=window.innerWidth;
   canvas.height=window.innerHeight;
  };
-
  resize();
  window.addEventListener("resize",resize);
 
- let particles=new Array(60).fill(0).map(()=>({
+ /* mouse + scroll */
+ let mouse={x:window.innerWidth/2,y:window.innerHeight/2};
+ const move=e=>{mouse.x=e.clientX;mouse.y=e.clientY};
+ window.addEventListener("mousemove",move);
+
+ /* star field */
+ const stars=new Array(120).fill(0).map(()=>({
   x:Math.random()*canvas.width,
   y:Math.random()*canvas.height,
-  vx:(Math.random()-0.5)*0.4,
-  vy:(Math.random()-0.5)*0.4
+  vx:(Math.random()-0.5)*0.1,
+  vy:(Math.random()-0.5)*0.1,
+  r:Math.random()*1.4+0.2
  }));
+
+ let shooting=[];
+
+ function spawnShooting(){
+  if(Math.random()<0.002){
+   shooting.push({x:Math.random()*canvas.width,y:-20,vx:6,vy:6,life:0});
+  }
+ }
+
+ function drawAurora(){
+  const g=ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+  g.addColorStop(0,"rgba(0,255,255,0.05)");
+  g.addColorStop(0.5,"rgba(0,100,255,0.05)");
+  g.addColorStop(1,"rgba(0,255,180,0.05)");
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+ }
+
+ function drawStars(){
+  stars.forEach(s=>{
+
+   /* mouse gravity */
+   const dx=mouse.x-s.x;
+   const dy=mouse.y-s.y;
+   const dist=Math.sqrt(dx*dx+dy*dy);
+   if(dist<120){
+    s.x-=dx*0.0008;
+    s.y-=dy*0.0008;
+   }
+
+   s.x+=s.vx;
+   s.y+=s.vy;
+
+   if(s.x<0||s.x>canvas.width) s.vx*=-1;
+   if(s.y<0||s.y>canvas.height) s.vy*=-1;
+
+   ctx.beginPath();
+   ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+   ctx.fillStyle="rgba(220,230,255,0.9)";
+   ctx.fill();
+  });
+ }
+
+ function drawConstellations(){
+  for(let i=0;i<stars.length;i++){
+   for(let j=i+1;j<stars.length;j++){
+    const dx=stars[i].x-stars[j].x;
+    const dy=stars[i].y-stars[j].y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+
+    if(dist<120){
+     ctx.beginPath();
+     ctx.moveTo(stars[i].x,stars[i].y);
+     ctx.lineTo(stars[j].x,stars[j].y);
+     ctx.strokeStyle=`rgba(180,200,255,${1-dist/120})`;
+     ctx.lineWidth=0.4;
+     ctx.stroke();
+    }
+   }
+  }
+ }
+
+ function drawShooting(){
+  shooting.forEach((s,i)=>{
+   ctx.beginPath();
+   ctx.moveTo(s.x,s.y);
+   ctx.lineTo(s.x-80,s.y-80);
+   ctx.strokeStyle="rgba(255,255,255,0.8)";
+   ctx.lineWidth=1;
+   ctx.stroke();
+
+   s.x+=s.vx;
+   s.y+=s.vy;
+   s.life++;
+
+   if(s.life>60) shooting.splice(i,1);
+  });
+ }
 
  function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  particles.forEach(p=>{
-   p.x+=p.vx;
-   p.y+=p.vy;
+  drawAurora();
+  drawStars();
+  drawConstellations();
 
-   if(p.x<0||p.x>canvas.width)p.vx*=-1;
-   if(p.y<0||p.y>canvas.height)p.vy*=-1;
+  spawnShooting();
+  drawShooting();
 
-   ctx.beginPath();
-   ctx.arc(p.x,p.y,2,0,Math.PI*2);
-   ctx.fillStyle="#38bdf8";
-   ctx.fill();
-  });
-
-  requestAnimationFrame(draw);
+  animationId=requestAnimationFrame(draw);
  }
 
  draw();
 
- return ()=>window.removeEventListener("resize",resize);
+ return()=>{
+  cancelAnimationFrame(animationId);
+  window.removeEventListener("resize",resize);
+  window.removeEventListener("mousemove",move);
+ };
 
 },[]);
 
 return(
-<motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.6}} className="bg-[#020617] text-white overflow-x-hidden font-sans">
+<motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.6}} className="bg-[#020617] text-white overflow-x-hidden font-sans relative">
 
 {/* PARTICLE BACKGROUND */}
-<canvas ref={canvasRef} className="fixed inset-0 -z-20 opacity-30"/>
+<canvas ref={canvasRef} className="fixed inset-0 z-0 opacity-70 pointer-events-none"/>
 
 {/* GRADIENT BACKGROUND */}
-<div className="fixed inset-0 -z-10 opacity-40" style={{background:"radial-gradient(circle at 20% 30%,#1e3a8a,transparent 40%), radial-gradient(circle at 80% 20%,#0891b2,transparent 40%), radial-gradient(circle at 60% 80%,#2563eb,transparent 40%)"}}/>
+<div className="fixed inset-0 -z-10 opacity-50" style={{background:"radial-gradient(circle at 20% 30%,#1e3a8a,transparent 40%), radial-gradient(circle at 80% 20%,#0891b2,transparent 40%), radial-gradient(circle at 60% 80%,#2563eb,transparent 40%)"}}/>
 
 {/* CURSOR GLOW */}
 <div className="pointer-events-none fixed w-40 h-40 rounded-full blur-3xl bg-cyan-500/20 -translate-x-1/2 -translate-y-1/2 z-30" style={{left:cursor.x,top:cursor.y}}/>
